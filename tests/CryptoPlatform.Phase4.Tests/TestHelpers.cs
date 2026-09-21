@@ -65,7 +65,7 @@ internal static class TestDataFactory
     public static SysUser CreateUser(string username = "admin", string passwordHash = "", string passwordAlgorithm = "PBKDF2-SHA256", int passwordVersion = 1)
     {
         var hasher = new Pbkdf2PasswordHasher();
-        var hash = string.IsNullOrEmpty(passwordHash) ? hasher.HashPassword("password123") : passwordHash;
+        var hash = string.IsNullOrEmpty(passwordHash) ? hasher.HashPassword("Admin@123") : passwordHash;
         return new SysUser
         {
             Id = NextId(),

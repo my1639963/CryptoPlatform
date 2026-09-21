@@ -57,9 +57,9 @@ public class AdminTokenServiceTests
         // 准备测试用户（使用 Pbkdf2PasswordHasher 生成密码）
         var user = TestDataFactory.CreateUser("admin");
         _db.Users.Add(user);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var result = await _sut.LoginAsync("admin", "password123", CancellationToken.None);
+        var result = await _sut.LoginAsync("admin", "Admin@123", TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result.AccessToken.Should().NotBeNullOrEmpty();
@@ -73,14 +73,14 @@ public class AdminTokenServiceTests
     {
         var user = TestDataFactory.CreateUser("admin");
         _db.Users.Add(user);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var act = () => _sut.LoginAsync("admin", "wrongpassword", CancellationToken.None);
+        var act = () => _sut.LoginAsync("admin", "wrongpassword", TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<BusinessException>()
             .Where(e => e.Code == "AUTH_LOGIN_FAILED");
 
-        var updatedUser = await _db.Users.FirstAsync(u => u.Username == "admin");
+        var updatedUser = await _db.Users.FirstAsync(u => u.Username == "admin", cancellationToken: TestContext.Current.CancellationToken);
         updatedUser.LoginFailCount.Should().Be(1);
     }
 
@@ -90,9 +90,9 @@ public class AdminTokenServiceTests
         var user = TestDataFactory.CreateUser("admin");
         user.LockedUntil = DateTime.UtcNow.AddMinutes(10);
         _db.Users.Add(user);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var act = () => _sut.LoginAsync("admin", "password123", CancellationToken.None);
+        var act = () => _sut.LoginAsync("admin", "Admin@123", TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<BusinessException>()
             .Where(e => e.Code == "AUTH_ACCOUNT_LOCKED");
@@ -104,9 +104,9 @@ public class AdminTokenServiceTests
         var user = TestDataFactory.CreateUser("admin");
         user.Status = 2; // 禁用
         _db.Users.Add(user);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var act = () => _sut.LoginAsync("admin", "password123", CancellationToken.None);
+        var act = () => _sut.LoginAsync("admin", "Admin@123", TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<BusinessException>()
             .Where(e => e.Code == "AUTH_ACCOUNT_DISABLED");
@@ -115,7 +115,7 @@ public class AdminTokenServiceTests
     [Fact]
     public async Task LoginAsync_NonExistentUser_ShouldThrow()
     {
-        var act = () => _sut.LoginAsync("nonexistent", "password", CancellationToken.None);
+        var act = () => _sut.LoginAsync("nonexistent", "password", TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<BusinessException>()
             .Where(e => e.Code == "AUTH_LOGIN_FAILED");
@@ -126,9 +126,9 @@ public class AdminTokenServiceTests
     {
         var user = TestDataFactory.CreateUser("admin");
         _db.Users.Add(user);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var loginResult = await _sut.LoginAsync("admin", "password123", CancellationToken.None);
+        var loginResult = await _sut.LoginAsync("admin", "Admin@123", TestContext.Current.CancellationToken);
         var principal = await _sut.ValidateAsync(loginResult.AccessToken);
 
         principal.Should().NotBeNull();
@@ -139,14 +139,14 @@ public class AdminTokenServiceTests
     {
         var user = TestDataFactory.CreateUser("admin");
         _db.Users.Add(user);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var loginResult = await _sut.LoginAsync("admin", "password123", CancellationToken.None);
+        var loginResult = await _sut.LoginAsync("admin", "Admin@123", TestContext.Current.CancellationToken);
 
         // 提取 JTI 并撤销
         var tokenGen = new JwtTokenGenerator(_jwtSettings, new Mock<ILogger<JwtTokenGenerator>>().Object);
         var payload = tokenGen.Validate(loginResult.AccessToken);
-        await _sut.RevokeAsync(payload!.Jti, CancellationToken.None);
+        await _sut.RevokeAsync(payload!.Jti, TestContext.Current.CancellationToken);
 
         var principal = await _sut.ValidateAsync(loginResult.AccessToken);
         principal.Should().BeNull();
@@ -158,11 +158,11 @@ public class AdminTokenServiceTests
         var user = TestDataFactory.CreateUser("admin");
         user.LoginFailCount = 3;
         _db.Users.Add(user);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        await _sut.LoginAsync("admin", "password123", CancellationToken.None);
+        await _sut.LoginAsync("admin", "Admin@123", TestContext.Current.CancellationToken);
 
-        var updatedUser = await _db.Users.FirstAsync(u => u.Username == "admin");
+        var updatedUser = await _db.Users.FirstAsync(u => u.Username == "admin", cancellationToken: TestContext.Current.CancellationToken);
         updatedUser.LoginFailCount.Should().Be(0);
         updatedUser.LockedUntil.Should().BeNull();
     }
@@ -171,13 +171,13 @@ public class AdminTokenServiceTests
     public async Task LoginAsync_OldAlgorithm_ShouldUpgradePasswordHash()
     {
         // 模拟一个使用旧算法（SM3）存储的用户
-        var oldHash = AdminTokenService.ComputeSM3Hash("password123");
+        var oldHash = AdminTokenService.ComputeSM3Hash("Admin@123");
         var user = TestDataFactory.CreateUser("admin", oldHash, passwordAlgorithm: "LEGACY-SM3", passwordVersion: 0);
         _db.Users.Add(user);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // 由于 LEGACY-SM3 无法识别，登录应失败
-        var act = () => _sut.LoginAsync("admin", "password123", CancellationToken.None);
+        var act = () => _sut.LoginAsync("admin", "Admin@123", TestContext.Current.CancellationToken);
         await act.Should().ThrowAsync<BusinessException>()
             .Where(e => e.Code == "AUTH_LOGIN_FAILED");
     }
@@ -188,9 +188,9 @@ public class AdminTokenServiceTests
         var user = TestDataFactory.CreateUser("admin");
         user.MustModifyPassword = true;
         _db.Users.Add(user);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var result = await _sut.LoginAsync("admin", "password123", CancellationToken.None);
+        var result = await _sut.LoginAsync("admin", "Admin@123", TestContext.Current.CancellationToken);
 
         result.MustModifyPassword.Should().BeTrue();
     }
@@ -201,12 +201,12 @@ public class AdminTokenServiceTests
         var user = TestDataFactory.CreateUser("admin");
         user.LoginFailCount = 4;
         _db.Users.Add(user);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var act = () => _sut.LoginAsync("admin", "wrongpassword", CancellationToken.None);
+        var act = () => _sut.LoginAsync("admin", "wrongpassword", TestContext.Current.CancellationToken);
         await act.Should().ThrowAsync<BusinessException>();
 
-        var updatedUser = await _db.Users.FirstAsync(u => u.Username == "admin");
+        var updatedUser = await _db.Users.FirstAsync(u => u.Username == "admin", cancellationToken: TestContext.Current.CancellationToken);
         updatedUser.LoginFailCount.Should().Be(5);
         updatedUser.LockedUntil.Should().NotBeNull();
     }

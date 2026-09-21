@@ -33,12 +33,12 @@ public class AppAuthenticationServiceTests
         // 准备测试数据
         var app = TestDataFactory.CreateApplication("TEST_APP");
         _db.Applications.Add(app);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var secretHash = "my-secret-hash-key";
         var secret = TestDataFactory.CreateSecret(app.Id, secretHash);
         _db.ApplicationSecrets.Add(secret);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // 构造签名参数
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
@@ -61,11 +61,11 @@ public class AppAuthenticationServiceTests
     {
         var app = TestDataFactory.CreateApplication("TEST_APP");
         _db.Applications.Add(app);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var secret = TestDataFactory.CreateSecret(app.Id, "my-secret-hash");
         _db.ApplicationSecrets.Add(secret);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
         var nonce = Guid.NewGuid().ToString("N");
@@ -82,11 +82,11 @@ public class AppAuthenticationServiceTests
     {
         var app = TestDataFactory.CreateApplication("TEST_APP");
         _db.Applications.Add(app);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var secret = TestDataFactory.CreateSecret(app.Id, "my-secret-hash");
         _db.ApplicationSecrets.Add(secret);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // 使用 10 分钟前的时间戳（超过 5 分钟限制）
         var timestamp = DateTimeOffset.UtcNow.AddSeconds(-600).ToUnixTimeSeconds().ToString();
@@ -104,12 +104,12 @@ public class AppAuthenticationServiceTests
     {
         var app = TestDataFactory.CreateApplication("TEST_APP");
         _db.Applications.Add(app);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var secretHash = "my-secret-hash";
         var secret = TestDataFactory.CreateSecret(app.Id, secretHash);
         _db.ApplicationSecrets.Add(secret);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
         var nonce = Guid.NewGuid().ToString("N");
@@ -145,13 +145,13 @@ public class AppAuthenticationServiceTests
     {
         var app = TestDataFactory.CreateApplication("TEST_APP");
         _db.Applications.Add(app);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // 添加一个已撤销的凭据
         var secret = TestDataFactory.CreateSecret(app.Id, "hash");
         secret.RevokedAt = DateTime.UtcNow.AddMinutes(-1);
         _db.ApplicationSecrets.Add(secret);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
         var nonce = Guid.NewGuid().ToString("N");

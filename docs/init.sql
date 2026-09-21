@@ -19,7 +19,7 @@ INSERT INTO sys_role (id, role_code, role_name, description,created_at) VALUES
 -- status:             0 = 正常
 -- ─────────────────────────────────────────────────────────
 INSERT INTO sys_user (id, username, password_hash, password_algorithm, password_version, password_changed_at, must_modify_pwd, display_name, status, login_fail_count, locked_until, last_login_at, created_at, updated_at) VALUES
-(1000000000000006,'admin','PBKDF2-SHA256$1$YWRtaW5zYWx0MTIzNDU2$600000$REPLACE_WITH_ACTUAL_HASH','PBKDF2-SHA256',1,'2026-01-01 00:00:00.000000',1,'系统管理员',0,0,NULL,NULL,'2026-01-01 00:00:00.000000','2026-01-01 00:00:00.000000');
+(1000000000000006,'admin','PBKDF2-SHA256$1$oLp7bBWxNRuRVo9ysQkwTw==$600000$TuCAQOm3marzLQb1lutZAWJkFqb/jAMTNOQQFaqKbaY=','PBKDF2-SHA256',1,'2026-01-01 00:00:00.000000',1,'系统管理员',0,0,NULL,NULL,'2026-01-01 00:00:00.000000','2026-01-01 00:00:00.000000');
 -- ─────────────────────────────────────────────────────────
 -- 2. 关联 admin 用户 → SYSTEM_ADMIN 角色
 -- ─────────────────────────────────────────────────────────

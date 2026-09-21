@@ -290,9 +290,9 @@ public class CryptoServiceTests : IDisposable
     {
         var key = TestDataFactory.CreateKey(keyId: "KEY-ROT", status: "ACTIVE", currentVersion: 1);
         var version = TestDataFactory.CreateVersion(keyId: "KEY-ROT", status: "ROTATED");
-        await _db.Keys.AddAsync(key);
-        await _db.KeyVersions.AddAsync(version);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.KeyVersions.AddAsync(version, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var req = new Sm4EncryptRequest("KEY-ROT", null, "AAAA", "GCM", "BASE64", null, null);
 
@@ -307,9 +307,9 @@ public class CryptoServiceTests : IDisposable
     {
         var key = TestDataFactory.CreateKey(keyId: "KEY-ROTD", status: "ACTIVE", currentVersion: 1);
         var version = TestDataFactory.CreateVersion(keyId: "KEY-ROTD", status: "ROTATED");
-        await _db.Keys.AddAsync(key);
-        await _db.KeyVersions.AddAsync(version);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.KeyVersions.AddAsync(version, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var plaintext = "old data"u8.ToArray();
         _providerMock.Setup(p => p.DecryptAsync(

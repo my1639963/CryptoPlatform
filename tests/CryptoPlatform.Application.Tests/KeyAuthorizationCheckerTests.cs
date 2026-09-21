@@ -32,8 +32,8 @@ public class KeyAuthorizationCheckerTests : IDisposable
     public async Task Check_OwnerAppId_ShouldPass()
     {
         var key = TestDataFactory.CreateKey(ownerAppId: "APP-OWNER");
-        await _db.Keys.AddAsync(key);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var act = () => _checker.CheckAsync(key.KeyId, "APP-OWNER", "ENCRYPT", CancellationToken.None);
 
@@ -45,9 +45,9 @@ public class KeyAuthorizationCheckerTests : IDisposable
     {
         var key = TestDataFactory.CreateKey(ownerAppId: "APP-OWNER");
         var auth = TestDataFactory.CreateAuthorization(appId: "APP-CALLER", permissions: "ENCRYPT,DECRYPT");
-        await _db.Keys.AddAsync(key);
-        await _db.KeyAuthorizations.AddAsync(auth);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.KeyAuthorizations.AddAsync(auth, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var act = () => _checker.CheckAsync(key.KeyId, "APP-CALLER", "ENCRYPT", CancellationToken.None);
 
@@ -58,8 +58,8 @@ public class KeyAuthorizationCheckerTests : IDisposable
     public async Task Check_NonOwnerWithoutAuthorization_ShouldThrow()
     {
         var key = TestDataFactory.CreateKey(ownerAppId: "APP-OWNER");
-        await _db.Keys.AddAsync(key);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var act = () => _checker.CheckAsync(key.KeyId, "APP-STRANGER", "ENCRYPT", CancellationToken.None);
 
@@ -73,9 +73,9 @@ public class KeyAuthorizationCheckerTests : IDisposable
         var key = TestDataFactory.CreateKey(ownerAppId: "APP-OWNER");
         var auth = TestDataFactory.CreateAuthorization(appId: "APP-CALLER");
         auth.ExpiresAt = DateTime.UtcNow.AddHours(-1); // 已过期
-        await _db.Keys.AddAsync(key);
-        await _db.KeyAuthorizations.AddAsync(auth);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.KeyAuthorizations.AddAsync(auth, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var act = () => _checker.CheckAsync(key.KeyId, "APP-CALLER", "ENCRYPT", CancellationToken.None);
 
@@ -88,9 +88,9 @@ public class KeyAuthorizationCheckerTests : IDisposable
     {
         var key = TestDataFactory.CreateKey(ownerAppId: "APP-OWNER");
         var auth = TestDataFactory.CreateAuthorization(appId: "APP-CALLER", permissions: "DECRYPT");
-        await _db.Keys.AddAsync(key);
-        await _db.KeyAuthorizations.AddAsync(auth);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.KeyAuthorizations.AddAsync(auth, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var act = () => _checker.CheckAsync(key.KeyId, "APP-CALLER", "ENCRYPT", CancellationToken.None);
 
@@ -112,9 +112,9 @@ public class KeyAuthorizationCheckerTests : IDisposable
     {
         var key = TestDataFactory.CreateKey(ownerAppId: "APP-OWNER");
         var auth = TestDataFactory.CreateAuthorization(appId: "APP-CALLER", status: "REVOKED");
-        await _db.Keys.AddAsync(key);
-        await _db.KeyAuthorizations.AddAsync(auth);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.KeyAuthorizations.AddAsync(auth, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var act = () => _checker.CheckAsync(key.KeyId, "APP-CALLER", "ENCRYPT", CancellationToken.None);
 
@@ -128,9 +128,9 @@ public class KeyAuthorizationCheckerTests : IDisposable
         var key = TestDataFactory.CreateKey(ownerAppId: "APP-OWNER");
         var auth = TestDataFactory.CreateAuthorization(appId: "APP-CALLER", permissions: "ENCRYPT");
         auth.ExpiresAt = DateTime.UtcNow.AddHours(24); // 未过期
-        await _db.Keys.AddAsync(key);
-        await _db.KeyAuthorizations.AddAsync(auth);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.KeyAuthorizations.AddAsync(auth, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var act = () => _checker.CheckAsync(key.KeyId, "APP-CALLER", "ENCRYPT", CancellationToken.None);
 

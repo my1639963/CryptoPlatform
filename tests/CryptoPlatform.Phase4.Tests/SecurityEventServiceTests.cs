@@ -27,7 +27,7 @@ public class SecurityEventServiceTests
     {
         await _sut.RaiseAsync("AUTH_FAILURE", "KEY_001", "认证失败", CancellationToken.None);
 
-        var events = await _db.SecurityEvents.ToListAsync();
+        var events = await _db.SecurityEvents.ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         events.Should().HaveCount(1);
         events[0].EventType.Should().Be("AUTH_FAILURE");
         events[0].RelatedKeyId.Should().Be("KEY_001");
@@ -40,7 +40,7 @@ public class SecurityEventServiceTests
     {
         await _sut.RaiseAsync("APP_SECRET_BRUTE_FORCE", "APP_001", "KEY_001", "暴力破解", CancellationToken.None);
 
-        var events = await _db.SecurityEvents.ToListAsync();
+        var events = await _db.SecurityEvents.ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         events.Should().HaveCount(1);
         events[0].AppId.Should().Be("APP_001");
         events[0].RelatedKeyId.Should().Be("KEY_001");
@@ -59,7 +59,7 @@ public class SecurityEventServiceTests
     {
         await _sut.RaiseAsync(eventType, null, "test", CancellationToken.None);
 
-        var events = await _db.SecurityEvents.ToListAsync();
+        var events = await _db.SecurityEvents.ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         events.Should().HaveCount(1);
         events[0].Severity.Should().Be(expectedSeverity);
     }
@@ -78,12 +78,12 @@ public class SecurityEventServiceTests
     public async Task CloseAsync_ShouldUpdateEventStatus()
     {
         await _sut.RaiseAsync("AUTH_FAILURE", null, "test event", CancellationToken.None);
-        var events = await _db.SecurityEvents.ToListAsync();
+        var events = await _db.SecurityEvents.ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         var eventId = events[0].EventId;
 
         await _sut.CloseAsync(eventId, "admin", "已处理", CancellationToken.None);
 
-        var closedEvent = await _db.SecurityEvents.FirstAsync(e => e.EventId == eventId);
+        var closedEvent = await _db.SecurityEvents.FirstAsync(e => e.EventId == eventId, cancellationToken: TestContext.Current.CancellationToken);
         closedEvent.Status.Should().Be("CLOSED");
         closedEvent.Handler.Should().Be("admin");
         closedEvent.HandlingResult.Should().Be("已处理");

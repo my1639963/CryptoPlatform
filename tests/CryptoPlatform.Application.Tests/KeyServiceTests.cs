@@ -102,11 +102,11 @@ public class KeyServiceTests : IDisposable
         result.OwnerAppId.Should().Be("APP-001");
 
         // Verify DB state
-        var keyInDb = await _db.Keys.FirstOrDefaultAsync(k => k.KeyId == result.KeyId);
+        var keyInDb = await _db.Keys.FirstOrDefaultAsync(k => k.KeyId == result.KeyId, cancellationToken: TestContext.Current.CancellationToken);
         keyInDb.Should().NotBeNull();
         keyInDb!.Status.Should().Be("CREATED");
 
-        var versionInDb = await _db.KeyVersions.FirstOrDefaultAsync(v => v.KeyId == result.KeyId);
+        var versionInDb = await _db.KeyVersions.FirstOrDefaultAsync(v => v.KeyId == result.KeyId, cancellationToken: TestContext.Current.CancellationToken);
         versionInDb.Should().NotBeNull();
         versionInDb!.ProviderKeyRef.Should().Be("SOFTWARE:sm4-test:1");
     }
@@ -179,9 +179,9 @@ public class KeyServiceTests : IDisposable
         // Arrange
         var key = TestDataFactory.CreateKey(status: "CREATED", currentVersion: 1);
         var version = TestDataFactory.CreateVersion(status: "CREATED");
-        await _db.Keys.AddAsync(key);
-        await _db.KeyVersions.AddAsync(version);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.KeyVersions.AddAsync(version, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         var result = await _keyService.ActivateAsync(key.KeyId, CancellationToken.None);
@@ -196,9 +196,9 @@ public class KeyServiceTests : IDisposable
         // Arrange
         var key = TestDataFactory.CreateKey(status: "ACTIVE");
         var version = TestDataFactory.CreateVersion(status: "ACTIVE");
-        await _db.Keys.AddAsync(key);
-        await _db.KeyVersions.AddAsync(version);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.KeyVersions.AddAsync(version, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act & Assert
         var act = () => _keyService.ActivateAsync(key.KeyId, CancellationToken.None);
@@ -224,9 +224,9 @@ public class KeyServiceTests : IDisposable
         // Arrange
         var key = TestDataFactory.CreateKey(status: "ACTIVE", currentVersion: 1);
         var oldVersion = TestDataFactory.CreateVersion(status: "ACTIVE");
-        await _db.Keys.AddAsync(key);
-        await _db.KeyVersions.AddAsync(oldVersion);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.KeyVersions.AddAsync(oldVersion, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         _providerMock.Setup(p => p.GenerateKeyAsync(KeyAlgorithm.SM4_128, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProviderKeyResult
@@ -242,7 +242,7 @@ public class KeyServiceTests : IDisposable
         // Assert
         result.CurrentVersion.Should().Be(2);
 
-        var versions = await _db.KeyVersions.Where(v => v.KeyId == key.KeyId).ToListAsync();
+        var versions = await _db.KeyVersions.Where(v => v.KeyId == key.KeyId).ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         versions.Should().HaveCount(2);
         versions.First(v => v.VersionNo == 1).Status.Should().Be("ROTATED");
         versions.First(v => v.VersionNo == 2).Status.Should().Be("ACTIVE");
@@ -253,9 +253,9 @@ public class KeyServiceTests : IDisposable
     {
         var key = TestDataFactory.CreateKey(status: "CREATED", currentVersion: 1);
         var version = TestDataFactory.CreateVersion(status: "CREATED");
-        await _db.Keys.AddAsync(key);
-        await _db.KeyVersions.AddAsync(version);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.KeyVersions.AddAsync(version, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var act = () => _keyService.RotateAsync(key.KeyId, new RotateKeyCommand(null), CancellationToken.None);
 
@@ -269,12 +269,12 @@ public class KeyServiceTests : IDisposable
     public async Task Disable_ActiveKey_ShouldSucceed()
     {
         var key = TestDataFactory.CreateKey(status: "ACTIVE");
-        await _db.Keys.AddAsync(key);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         await _keyService.DisableAsync(key.KeyId, CancellationToken.None);
 
-        var updated = await _db.Keys.FirstAsync(k => k.KeyId == key.KeyId);
+        var updated = await _db.Keys.FirstAsync(k => k.KeyId == key.KeyId, cancellationToken: TestContext.Current.CancellationToken);
         updated.Status.Should().Be("DISABLED");
     }
 
@@ -282,8 +282,8 @@ public class KeyServiceTests : IDisposable
     public async Task Disable_CreatedKey_ShouldThrow()
     {
         var key = TestDataFactory.CreateKey(status: "CREATED");
-        await _db.Keys.AddAsync(key);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var act = () => _keyService.DisableAsync(key.KeyId, CancellationToken.None);
 
@@ -296,12 +296,12 @@ public class KeyServiceTests : IDisposable
     public async Task Revoke_ActiveKey_ShouldSucceed()
     {
         var key = TestDataFactory.CreateKey(status: "ACTIVE");
-        await _db.Keys.AddAsync(key);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         await _keyService.RevokeAsync(key.KeyId, CancellationToken.None);
 
-        var updated = await _db.Keys.FirstAsync(k => k.KeyId == key.KeyId);
+        var updated = await _db.Keys.FirstAsync(k => k.KeyId == key.KeyId, cancellationToken: TestContext.Current.CancellationToken);
         updated.Status.Should().Be("REVOKED");
     }
 
@@ -309,12 +309,12 @@ public class KeyServiceTests : IDisposable
     public async Task Revoke_CreatedKey_ShouldSucceed()
     {
         var key = TestDataFactory.CreateKey(status: "CREATED");
-        await _db.Keys.AddAsync(key);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         await _keyService.RevokeAsync(key.KeyId, CancellationToken.None);
 
-        var updated = await _db.Keys.FirstAsync(k => k.KeyId == key.KeyId);
+        var updated = await _db.Keys.FirstAsync(k => k.KeyId == key.KeyId, cancellationToken: TestContext.Current.CancellationToken);
         updated.Status.Should().Be("REVOKED");
     }
 
@@ -322,8 +322,8 @@ public class KeyServiceTests : IDisposable
     public async Task Revoke_DestroyedKey_ShouldThrow()
     {
         var key = TestDataFactory.CreateKey(status: "DESTROYED");
-        await _db.Keys.AddAsync(key);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var act = () => _keyService.RevokeAsync(key.KeyId, CancellationToken.None);
 
@@ -337,9 +337,9 @@ public class KeyServiceTests : IDisposable
     {
         var key = TestDataFactory.CreateKey(status: "ACTIVE", currentVersion: 1);
         var v1 = TestDataFactory.CreateVersion(status: "ACTIVE", providerKeyRef: "SOFTWARE:k:1");
-        await _db.Keys.AddAsync(key);
-        await _db.KeyVersions.AddAsync(v1);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.KeyVersions.AddAsync(v1, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         _providerMock.Setup(p => p.DestroyKeyAsync("SOFTWARE:k:1", It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -347,10 +347,10 @@ public class KeyServiceTests : IDisposable
         var cmd = new DestroyKeyCommand("Test destroy", false);
         await _keyService.DestroyAsync(key.KeyId, cmd, CancellationToken.None);
 
-        var destroyedKey = await _db.Keys.FirstAsync(k => k.KeyId == key.KeyId);
+        var destroyedKey = await _db.Keys.FirstAsync(k => k.KeyId == key.KeyId, cancellationToken: TestContext.Current.CancellationToken);
         destroyedKey.Status.Should().Be("DESTROYED");
 
-        var destroyedVersion = await _db.KeyVersions.FirstAsync(v => v.KeyId == key.KeyId);
+        var destroyedVersion = await _db.KeyVersions.FirstAsync(v => v.KeyId == key.KeyId, cancellationToken: TestContext.Current.CancellationToken);
         destroyedVersion.Status.Should().Be("DESTROYED");
         destroyedVersion.DestroyResult.Should().Be("Success");
     }
@@ -359,8 +359,8 @@ public class KeyServiceTests : IDisposable
     public async Task Destroy_AlreadyDestroyedKey_ShouldThrow()
     {
         var key = TestDataFactory.CreateKey(status: "DESTROYED");
-        await _db.Keys.AddAsync(key);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var act = () => _keyService.DestroyAsync(key.KeyId, new DestroyKeyCommand("again", false), CancellationToken.None);
 
@@ -374,8 +374,8 @@ public class KeyServiceTests : IDisposable
     public async Task Get_ExistingKey_ShouldReturnDescriptor()
     {
         var key = TestDataFactory.CreateKey();
-        await _db.Keys.AddAsync(key);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var result = await _keyService.GetAsync(key.KeyId, CancellationToken.None);
 
@@ -400,12 +400,12 @@ public class KeyServiceTests : IDisposable
         var key = TestDataFactory.CreateKey(currentVersion: 2);
         var v1 = TestDataFactory.CreateVersion(versionNo: 1, status: "ROTATED");
         var v2 = TestDataFactory.CreateVersion(versionNo: 2, status: "ACTIVE");
-        await _db.Keys.AddAsync(key);
-        await _db.KeyVersions.AddAsync(v1);
-        await _db.KeyVersions.AddAsync(v2);
-        await _db.SaveChangesAsync();
+        await _db.Keys.AddAsync(key, TestContext.Current.CancellationToken);
+        await _db.KeyVersions.AddAsync(v1, TestContext.Current.CancellationToken);
+        await _db.KeyVersions.AddAsync(v2, TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var result = await _keyService.GetVersionsAsync(key.KeyId, CancellationToken.None);
+        var result = await _keyService.GetVersionsAsync(key.KeyId, TestContext.Current.CancellationToken);
 
         result.Should().HaveCount(2);
         result[0].VersionNo.Should().Be(2); // 降序排列
