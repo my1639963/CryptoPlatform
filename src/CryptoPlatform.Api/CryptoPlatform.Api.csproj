@@ -37,4 +37,8 @@
     <ProjectReference Include="..\CryptoPlatform.Infrastructure\CryptoPlatform.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="logs\" />
+  </ItemGroup>
+
 </Project>
