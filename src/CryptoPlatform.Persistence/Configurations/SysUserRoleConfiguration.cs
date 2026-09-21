@@ -17,5 +17,6 @@ public sealed class SysUserRoleConfiguration : IEntityTypeConfiguration<SysUserR
         b.HasIndex(x => new { x.UserId, x.RoleId }).IsUnique().HasDatabaseName("uk_user_role");
         b.HasIndex(x => x.UserId).HasDatabaseName("ix_user_role_user");
         b.HasIndex(x => x.RoleId).HasDatabaseName("ix_user_role_role");
+        b.HasOne(x => x.Role).WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Restrict);
     }
 }

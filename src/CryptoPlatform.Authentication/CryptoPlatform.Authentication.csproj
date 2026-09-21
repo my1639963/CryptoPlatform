@@ -5,9 +5,11 @@
     <ProjectReference Include="..\CryptoPlatform.Persistence\CryptoPlatform.Persistence.csproj" />
     <ProjectReference Include="..\CryptoPlatform.Crypto.Abstractions\CryptoPlatform.Crypto.Abstractions.csproj" />
     <ProjectReference Include="..\CryptoPlatform.Infrastructure\CryptoPlatform.Infrastructure.csproj" />
+    <ProjectReference Include="..\CryptoPlatform.Security\CryptoPlatform.Security.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.*" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.13" />

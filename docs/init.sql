@@ -11,14 +11,15 @@ INSERT INTO sys_role (id, role_code, role_name, description,created_at) VALUES
 
 -- ─────────────────────────────────────────────────────────
 -- 创建系统管理员用户
--- username:      admin
--- password:      Admin@123
--- password_hash: PBKDF2-SHA256, 16字节盐, 32字节子密钥, 100000次迭代
---                格式符合 ASP.NET Core PasswordHasher 输出（Base64 编码）
--- status:        0 = 正常
+-- username:           admin
+-- password:           Admin@123
+-- password_hash:      PBKDF2-SHA256 格式（algorithm$version$salt$iterations$hash）
+-- password_algorithm: PBKDF2-SHA256
+-- password_version:   1
+-- status:             0 = 正常
 -- ─────────────────────────────────────────────────────────
-INSERT INTO sys_user (id, username, password_hash, display_name, status, login_fail_count, locked_until, last_login_at, created_at, updated_at) VALUES
-(1000000000000006,'admin','AQAAAAIAAAcQAAAAEHVzZXItc2FsdC1zZWNyZXQAAAAA2Pb5R1k3jKx9Q0wFrYNHP0Lm6sD8cA1B2C3D4E5F6G7','系统管理员',0,0,NULL,NULL,'2026-01-01 00:00:00.000000','2026-01-01 00:00:00.000000');
+INSERT INTO sys_user (id, username, password_hash, password_algorithm, password_version, password_changed_at, must_modify_pwd, display_name, status, login_fail_count, locked_until, last_login_at, created_at, updated_at) VALUES
+(1000000000000006,'admin','PBKDF2-SHA256$1$YWRtaW5zYWx0MTIzNDU2$600000$REPLACE_WITH_ACTUAL_HASH','PBKDF2-SHA256',1,'2026-01-01 00:00:00.000000',1,'系统管理员',0,0,NULL,NULL,'2026-01-01 00:00:00.000000','2026-01-01 00:00:00.000000');
 -- ─────────────────────────────────────────────────────────
 -- 2. 关联 admin 用户 → SYSTEM_ADMIN 角色
 -- ─────────────────────────────────────────────────────────

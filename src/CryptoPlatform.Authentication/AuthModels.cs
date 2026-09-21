@@ -22,7 +22,8 @@ public sealed record AdminLoginResponse(
     string TokenType,
     int ExpiresIn,
     string OperatorId,
-    string Role);
+    string Role,
+    bool MustModifyPassword = false);
 
 /// <summary>令牌载荷</summary>
 public sealed record TokenPayload(

@@ -9,4 +9,7 @@ public sealed class SysUserRole
     public long UserId { get; set; }
     public long RoleId { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>角色导航属性</summary>
+    public SysRole? Role { get; set; }
 }

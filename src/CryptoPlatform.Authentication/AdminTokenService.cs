@@ -1,6 +1,8 @@
+using CryptoPlatform.Authentication.PasswordHashing;
 using CryptoPlatform.Domain;
 using CryptoPlatform.Infrastructure.Caching;
 using CryptoPlatform.Persistence;
+using CryptoPlatform.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -18,14 +20,27 @@ public interface IAdminTokenService
 
 /// <summary>
 /// 管理员 Token 服务实现。
-/// 支持登录（密码校验 + 锁定机制）、令牌验证、令牌撤销（基于缓存）。
+/// 支持：
+/// - 可配置 KDF 密码校验（通过 IPasswordHasherFactory）
+/// - 密码哈希自动升级策略
+/// - 登录失败锁定机制
+/// - 安全事件上报
+/// - 首次登录强制修改密码标记
 /// </summary>
 public sealed class AdminTokenService : IAdminTokenService
 {
+    /// <summary>最大登录失败次数，超过则锁定账号</summary>
+    private const int MaxLoginFailCount = 5;
+
+    /// <summary>账号锁定时长（分钟）</summary>
+    private const int LockoutMinutes = 30;
+
     private readonly CryptoPlatformDbContext _db;
     private readonly ITokenGenerator _tokenGen;
     private readonly ICacheService _cache;
     private readonly JwtSettings _jwtSettings;
+    private readonly IPasswordHasherFactory _hasherFactory;
+    private readonly ISecurityEventService _securityEvents;
     private readonly ILogger<AdminTokenService> _logger;
 
     public AdminTokenService(
@@ -33,12 +48,16 @@ public sealed class AdminTokenService : IAdminTokenService
         ITokenGenerator tokenGen,
         ICacheService cache,
         JwtSettings jwtSettings,
+        IPasswordHasherFactory hasherFactory,
+        ISecurityEventService securityEvents,
         ILogger<AdminTokenService> logger)
     {
         _db = db;
         _tokenGen = tokenGen;
         _cache = cache;
         _jwtSettings = jwtSettings;
+        _hasherFactory = hasherFactory;
+        _securityEvents = securityEvents;
         _logger = logger;
     }
 
@@ -46,6 +65,7 @@ public sealed class AdminTokenService : IAdminTokenService
     {
         var user = await _db.Users
             .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
             .FirstOrDefaultAsync(u => u.Username == username, ct)
             ?? throw new BusinessException("AUTH_LOGIN_FAILED", "用户名或密码错误");
 
@@ -55,22 +75,67 @@ public sealed class AdminTokenService : IAdminTokenService
         if (user.LockedUntil.HasValue && user.LockedUntil > DateTime.UtcNow)
             throw new BusinessException("AUTH_ACCOUNT_LOCKED", "账号已锁定");
 
-        if (!VerifyPassword(password, user.PasswordHash))
+        // ── 密码校验：使用存储的算法标识获取对应 Hasher ──
+        var hasher = _hasherFactory.GetByAlgorithm(user.PasswordAlgorithm, user.PasswordVersion);
+        if (hasher is null)
         {
-            user.LoginFailCount++;
-            if (user.LoginFailCount >= 5)
-                user.LockedUntil = DateTime.UtcNow.AddMinutes(30);
-            await _db.SaveChangesAsync(ct);
+            _logger.LogError("用户 {Username} 的密码算法 {Algorithm} v{Version} 无法识别",
+                username, user.PasswordAlgorithm, user.PasswordVersion);
             throw new BusinessException("AUTH_LOGIN_FAILED", "用户名或密码错误");
         }
 
-        // 登录成功
+        if (!hasher.VerifyPassword(password, user.PasswordHash))
+        {
+            // ── 登录失败处理 ──
+            user.LoginFailCount++;
+            if (user.LoginFailCount >= MaxLoginFailCount)
+            {
+                user.LockedUntil = DateTime.UtcNow.AddMinutes(LockoutMinutes);
+                _logger.LogWarning("用户 {Username} 登录失败 {Count} 次，账号已锁定至 {Until}",
+                    username, user.LoginFailCount, user.LockedUntil);
+
+                await _securityEvents.RaiseAsync(
+                    "ADMIN_ACCOUNT_LOCKED",
+                    user.Id.ToString(),
+                    null,
+                    $"管理员账号 {username} 因连续登录失败 {user.LoginFailCount} 次被锁定",
+                    ct);
+            }
+
+            await _db.SaveChangesAsync(ct);
+
+            await _securityEvents.RaiseAsync(
+                "ADMIN_LOGIN_FAILED",
+                user.Id.ToString(),
+                null,
+                $"管理员 {username} 登录失败（密码错误），累计失败 {user.LoginFailCount} 次",
+                ct);
+
+            throw new BusinessException("AUTH_LOGIN_FAILED", "用户名或密码错误");
+        }
+
+        // ── 登录成功：重置失败计数 ──
         user.LoginFailCount = 0;
         user.LockedUntil = null;
         user.LastLoginAt = DateTime.UtcNow;
+
+        // ── 密码哈希升级策略 ──
+        var defaultHasher = _hasherFactory.GetDefault();
+        if (hasher.NeedsUpgrade(user.PasswordHash))
+        {
+            user.PasswordHash = defaultHasher.HashPassword(password);
+            user.PasswordAlgorithm = defaultHasher.Algorithm;
+            user.PasswordVersion = defaultHasher.Version;
+            user.PasswordChangedAt = DateTime.UtcNow;
+
+            _logger.LogInformation("用户 {Username} 密码哈希已从 {OldAlgorithm} 升级至 {NewAlgorithm} v{Version}",
+                username, hasher.Algorithm, defaultHasher.Algorithm, defaultHasher.Version);
+        }
+
         await _db.SaveChangesAsync(ct);
 
-        var role = "SYSTEM_ADMIN";
+        // ── 签发 Token ──
+        var role = user.UserRoles.FirstOrDefault()?.Role?.RoleCode ?? "SYSTEM_ADMIN";
         var scopes = GetScopesForRole(role);
         var jti = Guid.NewGuid().ToString("N");
 
@@ -84,9 +149,22 @@ public sealed class AdminTokenService : IAdminTokenService
             Scopes: scopes,
             Expires: DateTime.UtcNow.AddSeconds(_jwtSettings.ExpiresInSeconds)));
 
-        _logger.LogInformation("管理员 {Username} 登录成功", username);
+        _logger.LogInformation("管理员 {Username} 登录成功，角色 {Role}", username, role);
 
-        return new AdminLoginResponse(token, "Bearer", _jwtSettings.ExpiresInSeconds, user.Id.ToString(), role);
+        await _securityEvents.RaiseAsync(
+            "ADMIN_LOGIN_SUCCESS",
+            user.Id.ToString(),
+            null,
+            $"管理员 {username} 登录成功",
+            ct);
+
+        return new AdminLoginResponse(
+            AccessToken: token,
+            TokenType: "Bearer",
+            ExpiresIn: _jwtSettings.ExpiresInSeconds,
+            OperatorId: user.Id.ToString(),
+            Role: role,
+            MustModifyPassword: user.MustModifyPassword);
     }
 
     public async Task<AdminPrincipal?> ValidateAsync(string token)
@@ -109,16 +187,9 @@ public sealed class AdminTokenService : IAdminTokenService
     }
 
     /// <summary>
-    /// 密码校验。
-    /// 简单实现：对比 SM3 哈希。生产环境应使用更安全的 KDF。
+    /// 保留旧 SM3 哈希工具方法，仅用于向后兼容测试或迁移场景。
+    /// 新代码不应使用此方法。
     /// </summary>
-    private static bool VerifyPassword(string password, string storedHash)
-    {
-        // 简化实现：直接比较哈希值
-        var hash = ComputeSM3Hash(password);
-        return string.Equals(hash, storedHash, StringComparison.Ordinal);
-    }
-
     public static string ComputeSM3Hash(string input)
     {
         var bytes = System.Text.Encoding.UTF8.GetBytes(input);

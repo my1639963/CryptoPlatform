@@ -3,6 +3,7 @@ using System;
 using CryptoPlatform.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CryptoPlatform.Persistence.Migrations
 {
     [DbContext(typeof(CryptoPlatformDbContext))]
-    partial class CryptoPlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260921093311_UpdateUserColumes")]
+    partial class UpdateUserColumes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

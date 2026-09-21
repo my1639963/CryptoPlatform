@@ -1,6 +1,7 @@
 using System.Threading;
 using CryptoPlatform.Audit;
 using CryptoPlatform.Authentication;
+using CryptoPlatform.Authentication.PasswordHashing;
 using CryptoPlatform.Domain.Entities;
 using CryptoPlatform.Infrastructure.Caching;
 using CryptoPlatform.Persistence;
@@ -61,13 +62,19 @@ internal static class TestDataFactory
     private static long _nextId = 10_000;
     private static long NextId() => Interlocked.Increment(ref _nextId);
 
-    public static SysUser CreateUser(string username = "admin", string passwordHash = "")
+    public static SysUser CreateUser(string username = "admin", string passwordHash = "", string passwordAlgorithm = "PBKDF2-SHA256", int passwordVersion = 1)
     {
+        var hasher = new Pbkdf2PasswordHasher();
+        var hash = string.IsNullOrEmpty(passwordHash) ? hasher.HashPassword("password123") : passwordHash;
         return new SysUser
         {
             Id = NextId(),
             Username = username,
-            PasswordHash = string.IsNullOrEmpty(passwordHash) ? AdminTokenService.ComputeSM3Hash("password123") : passwordHash,
+            PasswordHash = hash,
+            PasswordAlgorithm = passwordAlgorithm,
+            PasswordVersion = passwordVersion,
+            PasswordChangedAt = DateTime.UtcNow,
+            MustModifyPassword = false,
             DisplayName = "Test Admin",
             Status = 0,
             LoginFailCount = 0,
