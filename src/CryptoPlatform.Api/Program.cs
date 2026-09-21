@@ -88,6 +88,9 @@ public class Program
             builder.Services.AddCryptoAbstractions();
             builder.Services.AddSoftwareCryptoProvider();
 
+            // ── HttpContext 访问器 ──
+            builder.Services.AddHttpContextAccessor();
+
             // ── 业务层 ──
             builder.Services.AddApplication();
             builder.Services.AddPlatformAuthorization();

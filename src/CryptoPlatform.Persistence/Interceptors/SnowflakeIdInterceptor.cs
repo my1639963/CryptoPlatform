@@ -42,7 +42,7 @@ public sealed class SnowflakeIdInterceptor : SaveChangesInterceptor
         foreach (var entry in entries)
         {
             var idProperty = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Id");
-            if (idProperty is not null && (long)idProperty.CurrentValue == 0L)
+            if (idProperty is not null && idProperty.CurrentValue is not null && (long)idProperty.CurrentValue == 0L)
             {
                 idProperty.CurrentValue = _idGenerator.NextId();
             }

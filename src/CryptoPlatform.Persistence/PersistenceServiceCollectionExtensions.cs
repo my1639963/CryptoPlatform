@@ -22,7 +22,8 @@ public static class PersistenceServiceCollectionExtensions
 
         services.AddDbContext<CryptoPlatformDbContext>((sp, options) =>
         {
-            var connectionString = configuration.GetConnectionString("Default");
+            var connectionString = configuration.GetConnectionString("Default")
+                ?? throw new InvalidOperationException("缺少连接字符串配置: ConnectionStrings:Default");
             options.UseMySQL(connectionString);
 
             // 注入拦截器
