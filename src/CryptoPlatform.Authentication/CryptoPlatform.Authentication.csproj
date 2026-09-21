@@ -4,6 +4,7 @@
     <ProjectReference Include="..\CryptoPlatform.Domain\CryptoPlatform.Domain.csproj" />
     <ProjectReference Include="..\CryptoPlatform.Persistence\CryptoPlatform.Persistence.csproj" />
     <ProjectReference Include="..\CryptoPlatform.Crypto.Abstractions\CryptoPlatform.Crypto.Abstractions.csproj" />
+    <ProjectReference Include="..\CryptoPlatform.Infrastructure\CryptoPlatform.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

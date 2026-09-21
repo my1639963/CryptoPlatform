@@ -8,6 +8,7 @@
     <Project Path="src/CryptoPlatform.Crypto.Abstractions/CryptoPlatform.Crypto.Abstractions.csproj" />
     <Project Path="src/CryptoPlatform.Crypto.Hsm/CryptoPlatform.Crypto.Hsm.csproj" />
     <Project Path="src/CryptoPlatform.Crypto.Software/CryptoPlatform.Crypto.Software.csproj" />
+    <Project Path="src/CryptoPlatform.Infrastructure/CryptoPlatform.Infrastructure.csproj" />
     <Project Path="src/CryptoPlatform.Domain/CryptoPlatform.Domain.csproj" />
     <Project Path="src/CryptoPlatform.Persistence/CryptoPlatform.Persistence.csproj" />
     <Project Path="src/CryptoPlatform.Security/CryptoPlatform.Security.csproj" />
@@ -19,5 +20,6 @@
     <Project Path="tests/CryptoPlatform.Domain.Tests/CryptoPlatform.Domain.Tests.csproj" />
     <Project Path="tests/CryptoPlatform.Phase4.Tests/CryptoPlatform.Phase4.Tests.csproj" />
     <Project Path="tests/CryptoPlatform.Api.Tests/CryptoPlatform.Api.Tests.csproj" />
+    <Project Path="tests/CryptoPlatform.Infrastructure.Tests/CryptoPlatform.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>

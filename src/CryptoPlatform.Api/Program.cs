@@ -1,3 +1,4 @@
+using CryptoPlatform.Api.Health;
 using CryptoPlatform.Api.Middleware;
 using CryptoPlatform.Application;
 using CryptoPlatform.Audit;
@@ -5,6 +6,7 @@ using CryptoPlatform.Authentication;
 using CryptoPlatform.Authorization;
 using CryptoPlatform.Crypto.Abstractions;
 using CryptoPlatform.Crypto.Software;
+using CryptoPlatform.Infrastructure;
 using CryptoPlatform.Persistence;
 using CryptoPlatform.Security;
 using Scalar.AspNetCore;
@@ -60,10 +62,27 @@ public class Program
                 });
             });
             // ── 健康检查 ──
-            builder.Services.AddHealthChecks();
+            builder.Services.AddHealthChecks()
+                .AddDbContextCheck<CryptoPlatformDbContext>("database")
+                .AddCheck<CryptoProviderHealthCheck>("crypto_provider");
 
             // ── 基础设施层 ──
             builder.Services.AddPersistence(builder.Configuration);
+
+            // 缓存基础设施（ICacheService + IDistributedLock）
+            var cacheProvider = builder.Configuration["Cache:Provider"] ?? "Memory";
+            if (string.Equals(cacheProvider, "Redis", StringComparison.OrdinalIgnoreCase))
+            {
+                var redisConn = builder.Configuration["Cache:RedisConnectionString"]
+                    ?? throw new InvalidOperationException("使用 Redis 缓存时必须在配置中提供 Cache:RedisConnectionString");
+                builder.Services.AddRedisCacheInfrastructure(redisConn);
+                Log.Information("缓存提供者: Redis");
+            }
+            else
+            {
+                builder.Services.AddMemoryCacheInfrastructure();
+                Log.Information("缓存提供者: Memory（开发环境）");
+            }
 
             // ── 密码学层 ──
             builder.Services.AddCryptoAbstractions();
@@ -74,7 +93,6 @@ public class Program
             builder.Services.AddPlatformAuthorization();
 
             // ── 安全层 ──
-            builder.Services.AddDistributedMemoryCache(); // 开发阶段使用内存缓存，生产环境替换为 Redis
             builder.Services.AddAuthenticationServices();
             builder.Services.AddAuditServices();
             builder.Services.AddSecurityServices();

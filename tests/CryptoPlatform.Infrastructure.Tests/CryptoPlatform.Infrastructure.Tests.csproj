@@ -11,11 +11,9 @@
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="FluentAssertions" Version="8.11.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.*" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.*" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.*" />
     <PackageReference Include="Moq" Version="4.20.72" />
-    <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
@@ -25,12 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\CryptoPlatform.Audit\CryptoPlatform.Audit.csproj" />
-    <ProjectReference Include="..\..\src\CryptoPlatform.Authentication\CryptoPlatform.Authentication.csproj" />
-    <ProjectReference Include="..\..\src\CryptoPlatform.Domain\CryptoPlatform.Domain.csproj" />
-    <ProjectReference Include="..\..\src\CryptoPlatform.Persistence\CryptoPlatform.Persistence.csproj" />
-    <ProjectReference Include="..\..\src\CryptoPlatform.Security\CryptoPlatform.Security.csproj" />
     <ProjectReference Include="..\..\src\CryptoPlatform.Infrastructure\CryptoPlatform.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\CryptoPlatform.Crypto.Software\CryptoPlatform.Crypto.Software.csproj" />
   </ItemGroup>
 
 </Project>

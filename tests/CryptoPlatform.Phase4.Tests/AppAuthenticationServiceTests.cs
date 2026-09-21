@@ -1,7 +1,7 @@
 using System.Text;
 using CryptoPlatform.Authentication;
+using CryptoPlatform.Infrastructure.Caching;
 using FluentAssertions;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Org.BouncyCastle.Crypto.Digests;
@@ -17,7 +17,7 @@ public class AppAuthenticationServiceTests
 {
     private readonly AppAuthenticationService _sut;
     private readonly CryptoPlatform.Persistence.CryptoPlatformDbContext _db;
-    private readonly IDistributedCache _cache;
+    private readonly ICacheService _cache;
 
     public AppAuthenticationServiceTests()
     {

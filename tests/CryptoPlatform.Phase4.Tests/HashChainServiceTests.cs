@@ -1,6 +1,6 @@
 using CryptoPlatform.Audit;
+using CryptoPlatform.Infrastructure.Caching;
 using FluentAssertions;
-using Microsoft.Extensions.Caching.Distributed;
 
 namespace CryptoPlatform.Phase4.Tests;
 
@@ -11,7 +11,7 @@ public class HashChainServiceTests
 {
     private readonly HashChainService _sut;
     private readonly CryptoPlatform.Persistence.CryptoPlatformDbContext _db;
-    private readonly IDistributedCache _cache;
+    private readonly ICacheService _cache;
 
     public HashChainServiceTests()
     {

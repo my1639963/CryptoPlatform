@@ -3,6 +3,7 @@ using CryptoPlatform.Crypto.Abstractions;
 using CryptoPlatform.Application.Keys;
 using CryptoPlatform.Domain;
 using CryptoPlatform.Domain.Entities;
+using CryptoPlatform.Infrastructure.Locking;
 using CryptoPlatform.Persistence;
 using CryptoPlatform.Security;
 using FluentAssertions;
@@ -24,6 +25,7 @@ public class KeyServiceTests : IDisposable
     private readonly Mock<IAuditService> _auditMock;
     private readonly Mock<ISecurityEventService> _securityMock;
     private readonly Mock<IOperationContext> _operationContextMock;
+    private readonly Mock<IDistributedLock> _lockMock;
     private readonly KeyService _keyService;
 
     public KeyServiceTests()
@@ -34,6 +36,14 @@ public class KeyServiceTests : IDisposable
         _auditMock = new Mock<IAuditService>();
         _securityMock = new Mock<ISecurityEventService>();
         _operationContextMock = new Mock<IOperationContext>();
+        _lockMock = new Mock<IDistributedLock>();
+
+        // 分布式锁默认返回一个可释放的句柄
+        var mockLockHandle = new Mock<IAsyncDisposable>();
+        mockLockHandle.Setup(h => h.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _lockMock.Setup(l => l.TryAcquireAsync(
+                It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockHandle.Object);
 
         _routerMock.Setup(r => r.GetDefaultProvider()).Returns(_providerMock.Object);
         _routerMock.Setup(r => r.ResolveProvider(It.IsAny<string>())).Returns(_providerMock.Object);
@@ -55,6 +65,7 @@ public class KeyServiceTests : IDisposable
         _keyService = new KeyService(
             _db, _routerMock.Object, _auditMock.Object,
             _securityMock.Object, _operationContextMock.Object,
+            _lockMock.Object,
             Mock.Of<ILogger<KeyService>>());
     }
 

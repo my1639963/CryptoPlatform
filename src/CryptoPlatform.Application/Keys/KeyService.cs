@@ -3,6 +3,7 @@ using CryptoPlatform.Crypto.Abstractions;
 using CryptoPlatform.Domain;
 using CryptoPlatform.Domain.Entities;
 using CryptoPlatform.Domain.Enums;
+using CryptoPlatform.Infrastructure.Locking;
 using CryptoPlatform.Persistence;
 using CryptoPlatform.Security;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ public sealed class KeyService : IKeyService
     private readonly IAuditService _audit;
     private readonly ISecurityEventService _securityEvents;
     private readonly IOperationContext _operationContext;
+    private readonly IDistributedLock _distributedLock;
     private readonly ILogger<KeyService> _logger;
 
     public KeyService(
@@ -30,6 +32,7 @@ public sealed class KeyService : IKeyService
         IAuditService audit,
         ISecurityEventService securityEvents,
         IOperationContext operationContext,
+        IDistributedLock distributedLock,
         ILogger<KeyService> logger)
     {
         _db = db;
@@ -37,6 +40,7 @@ public sealed class KeyService : IKeyService
         _audit = audit;
         _securityEvents = securityEvents;
         _operationContext = operationContext;
+        _distributedLock = distributedLock;
         _logger = logger;
     }
 
@@ -172,6 +176,11 @@ public sealed class KeyService : IKeyService
 
     public async Task<KeyDescriptor> RotateAsync(string keyId, RotateKeyCommand cmd, CancellationToken ct)
     {
+        var lockKey = $"lock:key-rotate:{keyId}";
+        await using var lockHandle = await _distributedLock.TryAcquireAsync(
+            lockKey, expiry: TimeSpan.FromSeconds(30), waitTimeout: TimeSpan.FromSeconds(10), ct)
+            ?? throw new BusinessException("KEY_ROTATION_LOCKED", "密钥轮换操作正在进行中，请稍后重试");
+
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
         var key = await LoadKeyForUpdateAsync(keyId, ct);
@@ -290,6 +299,11 @@ public sealed class KeyService : IKeyService
 
     public async Task DestroyAsync(string keyId, DestroyKeyCommand cmd, CancellationToken ct)
     {
+        var lockKey = $"lock:key-destroy:{keyId}";
+        await using var lockHandle = await _distributedLock.TryAcquireAsync(
+            lockKey, expiry: TimeSpan.FromSeconds(30), waitTimeout: TimeSpan.FromSeconds(10), ct)
+            ?? throw new BusinessException("KEY_DESTROY_LOCKED", "密钥销毁操作正在进行中，请稍后重试");
+
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
         var key = await LoadKeyForUpdateAsync(keyId, ct);

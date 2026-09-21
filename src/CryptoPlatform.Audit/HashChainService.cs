@@ -1,8 +1,8 @@
 using System.Text;
 using CryptoPlatform.Domain.Entities;
+using CryptoPlatform.Infrastructure.Caching;
 using CryptoPlatform.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Org.BouncyCastle.Crypto.Digests;
 
 namespace CryptoPlatform.Audit;
@@ -30,10 +30,10 @@ public interface IHashChainService
 public sealed class HashChainService : IHashChainService
 {
     private readonly CryptoPlatformDbContext _db;
-    private readonly IDistributedCache _cache;
+    private readonly ICacheService _cache;
     private const string LatestHashKey = "audit:chain:latest_hash";
 
-    public HashChainService(CryptoPlatformDbContext db, IDistributedCache cache)
+    public HashChainService(CryptoPlatformDbContext db, ICacheService cache)
     {
         _db = db;
         _cache = cache;
@@ -74,11 +74,7 @@ public sealed class HashChainService : IHashChainService
 
     public async Task UpdateLatestHashAsync(string hash, CancellationToken ct)
     {
-        await _cache.SetStringAsync(LatestHashKey, hash,
-            new DistributedCacheEntryOptions
-            {
-                SlidingExpiration = TimeSpan.FromDays(30)
-            });
+        await _cache.SetStringSlidingAsync(LatestHashKey, hash, TimeSpan.FromDays(30), ct);
     }
 
     /// <summary>

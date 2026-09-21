@@ -1,9 +1,9 @@
 using System.Text;
 using CryptoPlatform.Domain;
 using CryptoPlatform.Domain.Entities;
+using CryptoPlatform.Infrastructure.Caching;
 using CryptoPlatform.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Macs;
@@ -40,7 +40,7 @@ public interface IAppAuthenticationService
 public sealed class AppAuthenticationService : IAppAuthenticationService
 {
     private readonly CryptoPlatformDbContext _db;
-    private readonly IDistributedCache _cache;
+    private readonly ICacheService _cache;
     private readonly ILogger<AppAuthenticationService> _logger;
 
     /// <summary>时间戳允许的最大偏差（秒）</summary>
@@ -48,7 +48,7 @@ public sealed class AppAuthenticationService : IAppAuthenticationService
 
     public AppAuthenticationService(
         CryptoPlatformDbContext db,
-        IDistributedCache cache,
+        ICacheService cache,
         ILogger<AppAuthenticationService> logger)
     {
         _db = db;
@@ -119,10 +119,7 @@ public sealed class AppAuthenticationService : IAppAuthenticationService
 
         // 6. 签名通过 → 更新 Nonce 缓存 + 更新凭据最后使用时间
         await _cache.SetStringAsync(nonceKey, "1",
-            new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(MaxTimestampDrift * 2)
-            });
+            TimeSpan.FromSeconds(MaxTimestampDrift * 2), ct);
 
         matchedSecret!.LastUsedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);

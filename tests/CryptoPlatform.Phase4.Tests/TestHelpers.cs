@@ -2,6 +2,7 @@ using System.Threading;
 using CryptoPlatform.Audit;
 using CryptoPlatform.Authentication;
 using CryptoPlatform.Domain.Entities;
+using CryptoPlatform.Infrastructure.Caching;
 using CryptoPlatform.Persistence;
 using CryptoPlatform.Persistence.IdGeneration;
 using CryptoPlatform.Persistence.Interceptors;
@@ -40,14 +41,15 @@ internal static class TestDbContextFactory
 }
 
 /// <summary>
-/// 创建测试用的 IDistributedCache（基于内存）。
+/// 创建测试用的 ICacheService（基于内存分布式缓存）。
 /// </summary>
 internal static class TestCacheFactory
 {
-    public static IDistributedCache Create()
+    public static ICacheService Create()
     {
         var options = Options.Create(new MemoryDistributedCacheOptions());
-        return new MemoryDistributedCache(options);
+        var distributedCache = new MemoryDistributedCache(options);
+        return new DistributedCacheService(distributedCache);
     }
 }
 

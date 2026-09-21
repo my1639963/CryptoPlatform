@@ -7,6 +7,7 @@
     <ProjectReference Include="..\CryptoPlatform.Authorization\CryptoPlatform.Authorization.csproj" />
     <ProjectReference Include="..\CryptoPlatform.Audit\CryptoPlatform.Audit.csproj" />
     <ProjectReference Include="..\CryptoPlatform.Security\CryptoPlatform.Security.csproj" />
+    <ProjectReference Include="..\CryptoPlatform.Infrastructure\CryptoPlatform.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,7 +1,7 @@
 using CryptoPlatform.Domain;
+using CryptoPlatform.Infrastructure.Caching;
 using CryptoPlatform.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
 namespace CryptoPlatform.Authentication;
@@ -24,14 +24,14 @@ public sealed class AdminTokenService : IAdminTokenService
 {
     private readonly CryptoPlatformDbContext _db;
     private readonly ITokenGenerator _tokenGen;
-    private readonly IDistributedCache _cache;
+    private readonly ICacheService _cache;
     private readonly JwtSettings _jwtSettings;
     private readonly ILogger<AdminTokenService> _logger;
 
     public AdminTokenService(
         CryptoPlatformDbContext db,
         ITokenGenerator tokenGen,
-        IDistributedCache cache,
+        ICacheService cache,
         JwtSettings jwtSettings,
         ILogger<AdminTokenService> logger)
     {
@@ -104,10 +104,7 @@ public sealed class AdminTokenService : IAdminTokenService
     public async Task RevokeAsync(string jti, CancellationToken ct)
     {
         await _cache.SetStringAsync($"token:revoked:{jti}", "1",
-            new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2)
-            });
+            TimeSpan.FromHours(2), ct);
         _logger.LogInformation("令牌 {Jti} 已撤销", jti);
     }
 

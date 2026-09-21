@@ -1,8 +1,8 @@
 using CryptoPlatform.Authentication;
 using CryptoPlatform.Domain;
+using CryptoPlatform.Infrastructure.Caching;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -16,7 +16,7 @@ public class AdminTokenServiceTests
     private readonly AdminTokenService _sut;
     private readonly CryptoPlatform.Persistence.CryptoPlatformDbContext _db;
     private readonly JwtSettings _jwtSettings;
-    private readonly IDistributedCache _cache;
+    private readonly ICacheService _cache;
 
     public AdminTokenServiceTests()
     {

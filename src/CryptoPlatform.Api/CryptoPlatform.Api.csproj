@@ -14,6 +14,7 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="6.*" />
     <PackageReference Include="Serilog.Sinks.File" Version="6.*" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.*" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +28,7 @@
     <ProjectReference Include="..\CryptoPlatform.Audit\CryptoPlatform.Audit.csproj" />
     <ProjectReference Include="..\CryptoPlatform.Security\CryptoPlatform.Security.csproj" />
     <ProjectReference Include="..\CryptoPlatform.Worker\CryptoPlatform.Worker.csproj" />
+    <ProjectReference Include="..\CryptoPlatform.Infrastructure\CryptoPlatform.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

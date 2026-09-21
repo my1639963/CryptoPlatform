@@ -1,18 +1,17 @@
-using System.Collections.Concurrent;
 using System.Text.Json;
 using CryptoPlatform.Api.Models;
+using CryptoPlatform.Infrastructure.Caching;
 
 namespace CryptoPlatform.Api.Middleware;
 
 /// <summary>
 /// 幂等控制中间件。
 /// 对指定路径的 POST 请求，通过 Idempotency-Key 请求头确保同一操作只执行一次。
-/// 开发阶段使用内存存储，生产环境应替换为 Redis。
+/// 通过 ICacheService 抽象存储，支持内存缓存和 Redis。
 /// </summary>
 public sealed class IdempotencyMiddleware
 {
     private readonly RequestDelegate _next;
-    private static readonly ConcurrentDictionary<string, IdempotencyRecord> _store = new();
 
     /// <summary>需要幂等控制的请求路径前缀</summary>
     private static readonly HashSet<string> IdempotentPaths = new(StringComparer.OrdinalIgnoreCase)
@@ -57,15 +56,21 @@ public sealed class IdempotencyMiddleware
             return;
         }
 
-        var key = $"{idempotencyKey}:{path}";
+        var cache = context.RequestServices.GetRequiredService<ICacheService>();
+        var cacheKey = $"idempotency:{idempotencyKey}:{path}";
 
         // 检查是否已有缓存的响应
-        if (_store.TryGetValue(key, out var existing) && !existing.IsExpired())
+        var cachedResponse = await cache.GetStringAsync(cacheKey);
+        if (cachedResponse is not null)
         {
-            context.Response.StatusCode = existing.StatusCode;
-            context.Response.ContentType = "application/json";
-            await context.Response.WriteAsync(existing.ResponseBody!);
-            return;
+            var record = JsonSerializer.Deserialize<IdempotencyRecord>(cachedResponse);
+            if (record is not null)
+            {
+                context.Response.StatusCode = record.StatusCode;
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsync(record.ResponseBody);
+                return;
+            }
         }
 
         // 执行请求并缓存响应
@@ -84,14 +89,10 @@ public sealed class IdempotencyMiddleware
         // 仅缓存成功的响应（2xx）
         if (context.Response.StatusCode >= 200 && context.Response.StatusCode < 300)
         {
-            _store[key] = new IdempotencyRecord(
-                context.Response.StatusCode,
-                responseBody,
-                DateTime.UtcNow.AddMinutes(RecordTtlMinutes));
+            var record = new IdempotencyRecord(context.Response.StatusCode, responseBody);
+            var json = JsonSerializer.Serialize(record);
+            await cache.SetStringAsync(cacheKey, json, TimeSpan.FromMinutes(RecordTtlMinutes));
         }
-
-        // 清理过期记录
-        CleanupExpired();
     }
 
     private static bool IsIdempotentPath(string path)
@@ -105,15 +106,17 @@ public sealed class IdempotencyMiddleware
         return false;
     }
 
-    private static void CleanupExpired()
+    private sealed class IdempotencyRecord
     {
-        var expiredKeys = _store.Where(kv => kv.Value.IsExpired()).Select(kv => kv.Key).ToList();
-        foreach (var key in expiredKeys)
-            _store.TryRemove(key, out _);
-    }
+        public int StatusCode { get; init; }
+        public string ResponseBody { get; init; } = "";
 
-    private sealed record IdempotencyRecord(int StatusCode, string ResponseBody, DateTime ExpiresAt)
-    {
-        public bool IsExpired() => DateTime.UtcNow > ExpiresAt;
+        public IdempotencyRecord() { }
+
+        public IdempotencyRecord(int statusCode, string responseBody)
+        {
+            StatusCode = statusCode;
+            ResponseBody = responseBody;
+        }
     }
 }
