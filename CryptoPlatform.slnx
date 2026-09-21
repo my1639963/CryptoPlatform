@@ -1,0 +1,23 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CryptoPlatform.Api/CryptoPlatform.Api.csproj" />
+    <Project Path="src/CryptoPlatform.Application/CryptoPlatform.Application.csproj" />
+    <Project Path="src/CryptoPlatform.Audit/CryptoPlatform.Audit.csproj" />
+    <Project Path="src/CryptoPlatform.Authentication/CryptoPlatform.Authentication.csproj" />
+    <Project Path="src/CryptoPlatform.Authorization/CryptoPlatform.Authorization.csproj" />
+    <Project Path="src/CryptoPlatform.Crypto.Abstractions/CryptoPlatform.Crypto.Abstractions.csproj" />
+    <Project Path="src/CryptoPlatform.Crypto.Hsm/CryptoPlatform.Crypto.Hsm.csproj" />
+    <Project Path="src/CryptoPlatform.Crypto.Software/CryptoPlatform.Crypto.Software.csproj" />
+    <Project Path="src/CryptoPlatform.Domain/CryptoPlatform.Domain.csproj" />
+    <Project Path="src/CryptoPlatform.Persistence/CryptoPlatform.Persistence.csproj" />
+    <Project Path="src/CryptoPlatform.Security/CryptoPlatform.Security.csproj" />
+    <Project Path="src/CryptoPlatform.Worker/CryptoPlatform.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CryptoPlatform.Application.Tests/CryptoPlatform.Application.Tests.csproj" />
+    <Project Path="tests/CryptoPlatform.Crypto.Software.Tests/CryptoPlatform.Crypto.Software.Tests.csproj" />
+    <Project Path="tests/CryptoPlatform.Domain.Tests/CryptoPlatform.Domain.Tests.csproj" />
+    <Project Path="tests/CryptoPlatform.Phase4.Tests/CryptoPlatform.Phase4.Tests.csproj" />
+    <Project Path="tests/CryptoPlatform.Api.Tests/CryptoPlatform.Api.Tests.csproj" />
+  </Folder>
+</Solution>

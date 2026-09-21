@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\CryptoPlatform.Domain\CryptoPlatform.Domain.csproj" />
+    <ProjectReference Include="..\CryptoPlatform.Persistence\CryptoPlatform.Persistence.csproj" />
+    <ProjectReference Include="..\CryptoPlatform.Crypto.Abstractions\CryptoPlatform.Crypto.Abstractions.csproj" />
+    <ProjectReference Include="..\CryptoPlatform.Authorization\CryptoPlatform.Authorization.csproj" />
+    <ProjectReference Include="..\CryptoPlatform.Audit\CryptoPlatform.Audit.csproj" />
+    <ProjectReference Include="..\CryptoPlatform.Security\CryptoPlatform.Security.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
