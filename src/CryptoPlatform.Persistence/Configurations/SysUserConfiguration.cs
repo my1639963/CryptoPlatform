@@ -10,13 +10,17 @@ public sealed class SysUserConfiguration : IEntityTypeConfiguration<SysUser>
     {
         b.ToTable("sys_user");
         b.HasKey(x => x.Id);
-        b.Property(x => x.Id).ValueGeneratedNever();
-        b.Property(x => x.Username).HasMaxLength(64).IsRequired();
-        b.Property(x => x.PasswordHash).HasMaxLength(255).IsRequired();
-        b.Property(x => x.DisplayName).HasMaxLength(128);
-        b.Property(x => x.Status).HasColumnType("tinyint").IsRequired();
-        b.Property(x => x.LockedUntil);
-        b.HasIndex(x => x.Username).IsUnique();
+        b.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
+        b.Property(x => x.Username).HasColumnName("username").HasMaxLength(64).IsRequired();
+        b.Property(x => x.PasswordHash).HasColumnName("password_hash").HasMaxLength(255).IsRequired();
+        b.Property(x => x.DisplayName).HasColumnName("display_name").HasMaxLength(128);
+        b.Property(x => x.Status).HasColumnName("status").HasColumnType("tinyint").IsRequired();
+        b.Property(x => x.LoginFailCount).HasColumnName("login_fail_count");
+        b.Property(x => x.LockedUntil).HasColumnName("locked_until");
+        b.Property(x => x.LastLoginAt).HasColumnName("last_login_at");
+        b.Property(x => x.CreatedAt).HasColumnName("created_at");
+        b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+        b.HasIndex(x => x.Username).IsUnique().HasDatabaseName("uk_user_username");
         b.HasMany(x => x.UserRoles).WithOne().HasForeignKey(x => x.UserId);
     }
 }

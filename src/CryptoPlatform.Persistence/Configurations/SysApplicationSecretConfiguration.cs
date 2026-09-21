@@ -10,9 +10,16 @@ public sealed class SysApplicationSecretConfiguration : IEntityTypeConfiguration
     {
         b.ToTable("sys_application_secret");
         b.HasKey(x => x.Id);
-        b.Property(x => x.Id).ValueGeneratedNever();
-        b.Property(x => x.SecretHash).HasMaxLength(255).IsRequired();
-        b.HasIndex(x => x.ApplicationId);
-        b.HasIndex(x => new { x.Status, x.ExpiresAt });
+        b.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
+        b.Property(x => x.ApplicationId).HasColumnName("application_id");
+        b.Property(x => x.SecretHash).HasColumnName("secret_hash").HasMaxLength(255).IsRequired();
+        b.Property(x => x.SecretVersion).HasColumnName("secret_version");
+        b.Property(x => x.Status).HasColumnName("status");
+        b.Property(x => x.ExpiresAt).HasColumnName("expires_at");
+        b.Property(x => x.LastUsedAt).HasColumnName("last_used_at");
+        b.Property(x => x.CreatedAt).HasColumnName("created_at");
+        b.Property(x => x.RevokedAt).HasColumnName("revoked_at");
+        b.HasIndex(x => x.ApplicationId).HasDatabaseName("ix_app_secret_application");
+        b.HasIndex(x => new { x.Status, x.ExpiresAt }).HasDatabaseName("ix_app_secret_status");
     }
 }
