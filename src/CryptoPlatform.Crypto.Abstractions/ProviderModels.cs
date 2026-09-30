@@ -61,6 +61,33 @@ public sealed class ProviderKeyInfo
 }
 
 /// <summary>
+/// 密钥销毁结果（需求 V2.10 §2.6：DestroyKeyAsync 必须返回明确结果）。
+/// 阶段二将替换现返回 Task 的 DestroyKeyAsync 签名。
+/// </summary>
+public sealed class DestroyKeyResult
+{
+    /// <summary>是否成功</summary>
+    public bool Success { get; init; }
+
+    /// <summary>在线材料是否已销毁（设备内 / 进程内材料）</summary>
+    public bool OnlineMaterialDestroyed { get; init; }
+
+    /// <summary>归档材料保留标记（V2.10 §3.2.23：ARCHIVE MATERIAL 仅用于历史解密/验签）</summary>
+    public bool ArchiveMaterialRetained { get; init; }
+
+    /// <summary>失败原因（Provider 不支持或设备异常时填写）</summary>
+    public string? FailureReason { get; init; }
+
+    /// <summary>语义化构造：Provider 不支持该项能力（显式 NotSupported，禁止静默失败）</summary>
+    public static DestroyKeyResult NotSupported(string reason) => new()
+    {
+        Success = false,
+        OnlineMaterialDestroyed = false,
+        FailureReason = $"NotSupported: {reason}",
+    };
+}
+
+/// <summary>
 /// Provider 健康检查结果
 /// </summary>
 public sealed class ProviderHealth
